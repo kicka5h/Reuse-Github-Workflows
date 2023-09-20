@@ -1,0 +1,28 @@
+name: TFLint
+
+on:
+  workflow_call:
+
+jobs:
+  tflint:
+    name: tflint
+    runs-on: ubuntu-latest
+    defaults:
+        run:
+          working-directory: ./**
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install TFLint
+        id: install_tflint
+        run: curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+      - name: Init TFLint
+        id: init_TFLint
+        run: tflint --init
+
+      - name: Run TFLint
+        id: run_tflint
+        run: tflint --recursive

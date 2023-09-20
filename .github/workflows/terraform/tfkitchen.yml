@@ -1,0 +1,17 @@
+name: "kitchen terraform"
+
+on:
+    workflow_call:
+
+jobs:
+    Kitchen-terraform:
+      name: Kitchen Terraform
+      runs-on: az-terraform
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+          
+        - name: Kitchen Test
+          uses: osinfra-io/github-kitchen-terraform-action@v2.0.0
+          with:
+            kitchen-command: "test"

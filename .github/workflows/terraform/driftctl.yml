@@ -1,0 +1,75 @@
+name: DriftCTL
+
+on:
+  workflow_call:
+    inputs:
+        tenant_id:
+          required: true
+          type: string
+          description: "Azure tenant ID"
+        subscription_id:
+          required: true
+          type: string
+          description: "Subscription ID"
+        client_id:
+          required: true
+          type: string
+          description: "Client ID"
+        state_account:
+          required: true
+          type: string
+          description: "Account name"
+        state_container:
+          required: true
+          type: string
+          description: "Container name"
+        state_file:
+          required: true
+          type: string
+          description: "File name"
+        storage_key:
+          required: true
+          type: string
+          description: "Storage account key"
+
+jobs:
+  driftctl:
+    name: driftctl
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./**
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install DriftCtl
+        id: install_driftctl
+        run: curl -L https://github.com/snyk/driftctl/releases/latest/download/driftctl_linux_amd64 -o driftctl
+
+      - name: DriftCtl Perms
+        id: diftctl_perms
+        run: chmod +x driftctl
+
+      - name: AZ Login
+        uses: azure/login@v1
+        with:
+          subscription-id: ${{ inputs.subscription_id }}
+          tenant-id: ${{ inputs.tenant_id }}
+          client-id: ${{ inputs.client_id }}
+
+      - name: Set vars
+        id: set_vars
+        run: |
+          export AZ_SUBSCRIPTION_ID=${{ inputs.subscription_id }} \
+          export AZ_TENANT_ID=${{ inputs.tenant_id }} \
+          export AZ_CLIENT_ID=${{ inputs.client_id }} \
+          export AZ_CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} #store this as a secret in the repo in Github
+          export AZ_STORAGE_ACCOUNT=${{ inputs.state_account }}
+          export AZ_STORAGE_KEY=${{ inputs.storage_key }}
+        
+      - name: Drift Scan
+        id: drift_scan
+        run : |
+          driftctl scan --from tfstate+azurerm://${{ inputs.state_account }}/${{ inputs.state_container }}/${{ inputs.state_file }}" --to=azure+tf
